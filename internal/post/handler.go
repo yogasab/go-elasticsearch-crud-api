@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"yogasab/go-elasticsearch-crud-api/internal/utils/http_response"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type postHandler struct {
@@ -32,4 +34,21 @@ func (h postHandler) InsertDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http_response.NewJSONResponse(w, http.StatusCreated, result)
+}
+
+func (h postHandler) FindDocumentByID(w http.ResponseWriter, r *http.Request) {
+	id := httprouter.ParamsFromContext(r.Context()).ByName("id")
+
+	post, err := h.postService.FindDocumentByID(r.Context(), id)
+	if err != nil {
+		data := map[string]interface{}{
+			"status":  err.Status(),
+			"code":    err.Code(),
+			"message": err.Message(),
+			"error":   err.Data(),
+		}
+		http_response.NewJSONResponse(w, http.StatusBadRequest, data)
+		return
+	}
+	http_response.NewJSONResponse(w, http.StatusCreated, post)
 }
