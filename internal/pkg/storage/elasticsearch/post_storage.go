@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"time"
 	"yogasab/go-elasticsearch-crud-api/internal/pkg/storage"
 	"yogasab/go-elasticsearch-crud-api/internal/utils/http_errors"
@@ -50,4 +51,33 @@ func (p postStorage) Insert(ctx context.Context, post storage.Post) http_errors.
 	}
 
 	return nil
+}
+
+func (p postStorage) FindByID(ctx context.Context, ID string) (*storage.Post, http_errors.RestErrors) {
+	req := esapi.GetRequest{
+		Index:      p.elastic.alias,
+		DocumentID: ID,
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	res, err := req.Do(ctx, p.elastic.client)
+	if err != nil {
+		return nil, http_errors.NewInternalServerError("error while find one document", []interface{}{err})
+	}
+	defer res.Body.Close()
+	if res.StatusCode == http.StatusNotFound {
+		return nil, http_errors.NewStatusNotFoundError("error document not found", []interface{}{err})
+	}
+	if res.IsError() {
+		return nil, http_errors.NewInternalServerError("error while inserting new document", []interface{}{err})
+	}
+	var (
+		post storage.Post
+		body document
+	)
+	body.Source = &post
+	if err = json.NewDecoder(res.Body).Decode(&body); err != nil {
+		return nil, http_errors.NewBadRequestError("error while inserting new document", []interface{}{err})
+	}
+	return &post, nil
 }
