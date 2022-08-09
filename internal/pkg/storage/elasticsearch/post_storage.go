@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 	"yogasab/go-elasticsearch-crud-api/internal/pkg/storage"
@@ -98,6 +100,30 @@ func (p postStorage) DeleteByID(ctx context.Context, ID string) http_errors.Rest
 	}
 	if res.IsError() {
 		return http_errors.NewInternalServerError("error while inserting new document", []interface{}{err})
+	}
+	return nil
+}
+
+func (p postStorage) UpdateByID(ctx context.Context, post storage.Post) http_errors.RestErrors {
+	body, _ := json.Marshal(post)
+	req := esapi.UpdateRequest{
+		Index:      p.elastic.alias,
+		DocumentID: post.ID,
+		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, body))),
+	}
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	res, err := req.Do(ctx, p.elastic.client)
+	log.Println(res.String())
+	if err != nil {
+		return http_errors.NewInternalServerError("error while updating new document", []interface{}{err})
+	}
+	defer res.Body.Close()
+	if res.StatusCode == http.StatusNotFound {
+		return http_errors.NewStatusNotFoundError("error document not found", []interface{}{err})
+	}
+	if res.IsError() {
+		return http_errors.NewInternalServerError("error updating new document", []interface{}{err})
 	}
 	return nil
 }
