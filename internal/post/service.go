@@ -62,9 +62,9 @@ func (s postService) DeleteDocumentByID(ctx context.Context, ID string) (bool, h
 func (s postService) UpdateDocumentByID(ctx context.Context, request UpdateDocumentRequest) (bool, http_errors.RestErrors) {
 	post := storage.Post{}
 	post.ID = request.ID
-	post.Title = request.Body.Title
-	post.Text = request.Body.Text
-	post.Tags = request.Body.Tags
+	post.Title = request.Title
+	post.Text = request.Text
+	post.Tags = request.Tags
 
 	isUpdated := true
 	err := s.storage.UpdateByID(ctx, post)

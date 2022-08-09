@@ -30,5 +30,6 @@ func StartApplication() {
 	router.HandlerFunc("POST", "/api/v1/posts", postHandler.InsertDocument)
 	router.HandlerFunc("GET", "/api/v1/posts/:id", postHandler.FindDocumentByID)
 	router.HandlerFunc("DELETE", "/api/v1/posts/:id", postHandler.DeleteDocumentByID)
+	router.HandlerFunc("PUT", "/api/v1/posts/:id", postHandler.UpdateDocumentByID)
 	log.Fatalln(http.ListenAndServe(":5000", router))
 }

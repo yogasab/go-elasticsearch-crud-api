@@ -69,3 +69,31 @@ func (h postHandler) DeleteDocumentByID(w http.ResponseWriter, r *http.Request) 
 	}
 	http_response.NewJSONResponse(w, http.StatusOK, isDeleted)
 }
+
+func (h postHandler) UpdateDocumentByID(w http.ResponseWriter, r *http.Request) {
+	var req UpdateDocumentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		data := map[string]interface{}{
+			"status":  "failed",
+			"code":    http.StatusBadRequest,
+			"message": "failed to decode request body",
+			"error":   err,
+		}
+		http_response.NewJSONResponse(w, http.StatusBadRequest, data)
+		return
+	}
+	ID := httprouter.ParamsFromContext(r.Context()).ByName("id")
+	req.ID = ID
+	isUpdated, err := h.postService.UpdateDocumentByID(r.Context(), req)
+	if err != nil {
+		data := map[string]interface{}{
+			"status":  err.Status(),
+			"code":    err.Code(),
+			"message": err.Message(),
+			"data":    map[string]interface{}{"is_updated": isUpdated},
+		}
+		http_response.NewJSONResponse(w, http.StatusBadRequest, data)
+		return
+	}
+	http_response.NewJSONResponse(w, http.StatusOK, isUpdated)
+}
