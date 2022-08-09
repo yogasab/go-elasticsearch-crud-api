@@ -12,21 +12,21 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
-var _ storage.PostStore = PostStorage{}
+var PostStorage storage.PostStore = postStorage{}
 
-type PostStorage struct {
+type postStorage struct {
 	elastic Elasticsearch
 	timeout time.Duration
 }
 
-func NewPostStorage(elastic Elasticsearch) (PostStorage, error) {
-	return PostStorage{
+func NewPostStorage(elastic Elasticsearch) (postStorage, error) {
+	return postStorage{
 		elastic: elastic,
 		timeout: time.Second * 10,
 	}, nil
 }
 
-func (p PostStorage) Insert(ctx context.Context, post storage.Post) error {
+func (p postStorage) Insert(ctx context.Context, post storage.Post) error {
 	body, err := json.Marshal(post)
 	if err != nil {
 		return errors.New(fmt.Sprintf("error while marshalling body json %v", err))
