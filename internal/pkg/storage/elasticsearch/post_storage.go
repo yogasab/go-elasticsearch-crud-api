@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 	"yogasab/go-elasticsearch-crud-api/internal/pkg/storage"
@@ -100,6 +99,5 @@ func (p postStorage) DeleteByID(ctx context.Context, ID string) http_errors.Rest
 	if res.IsError() {
 		return http_errors.NewInternalServerError("error while inserting new document", []interface{}{err})
 	}
-	log.Println(res)
 	return nil
 }

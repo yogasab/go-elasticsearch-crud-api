@@ -52,3 +52,20 @@ func (h postHandler) FindDocumentByID(w http.ResponseWriter, r *http.Request) {
 	}
 	http_response.NewJSONResponse(w, http.StatusCreated, post)
 }
+
+func (h postHandler) DeleteDocumentByID(w http.ResponseWriter, r *http.Request) {
+	ID := httprouter.ParamsFromContext(r.Context()).ByName("id")
+
+	isDeleted, err := h.postService.DeleteDocumentByID(r.Context(), ID)
+	if err != nil {
+		data := map[string]interface{}{
+			"status":  err.Status(),
+			"code":    err.Code(),
+			"message": err.Message(),
+			"data":    map[string]interface{}{"is_deleted": isDeleted},
+		}
+		http_response.NewJSONResponse(w, http.StatusBadRequest, data)
+		return
+	}
+	http_response.NewJSONResponse(w, http.StatusOK, isDeleted)
+}
