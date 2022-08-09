@@ -12,6 +12,7 @@ import (
 type PostService interface {
 	InsertDocument(ctx context.Context, request InsertDocumentRequest) (*InsertDocumentRequest, http_errors.RestErrors)
 	FindDocumentByID(ctx context.Context, ID string) (*storage.Post, http_errors.RestErrors)
+	DeleteDocumentByID(ctx context.Context, ID string) (bool, http_errors.RestErrors)
 }
 
 type postService struct {
@@ -46,4 +47,13 @@ func (s postService) FindDocumentByID(ctx context.Context, ID string) (*storage.
 		return nil, err
 	}
 	return post, nil
+}
+
+func (s postService) DeleteDocumentByID(ctx context.Context, ID string) (bool, http_errors.RestErrors) {
+	isDeleted := true
+	if err := s.storage.DeleteByID(ctx, ID); err != nil {
+		isDeleted = false
+		return isDeleted, err
+	}
+	return isDeleted, nil
 }
