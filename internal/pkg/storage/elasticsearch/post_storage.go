@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 	"yogasab/go-elasticsearch-crud-api/internal/pkg/storage"
+	"yogasab/go-elasticsearch-crud-api/internal/utils/http_errors"
 
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
@@ -19,17 +18,17 @@ type postStorage struct {
 	timeout time.Duration
 }
 
-func NewPostStorage(elastic Elasticsearch) (postStorage, error) {
+func NewPostStorage(elastic Elasticsearch) (postStorage, http_errors.RestErrors) {
 	return postStorage{
 		elastic: elastic,
 		timeout: time.Second * 10,
 	}, nil
 }
 
-func (p postStorage) Insert(ctx context.Context, post storage.Post) error {
+func (p postStorage) Insert(ctx context.Context, post storage.Post) http_errors.RestErrors {
 	body, err := json.Marshal(post)
 	if err != nil {
-		return errors.New(fmt.Sprintf("error while marshalling body json %v", err))
+		return http_errors.NewBadRequestError("error while marshalling body json", []interface{}{err})
 	}
 	req := esapi.CreateRequest{
 		Index:      p.elastic.alias,
@@ -40,14 +39,14 @@ func (p postStorage) Insert(ctx context.Context, post storage.Post) error {
 	defer cancel()
 	res, err := req.Do(ctx, p.elastic.client)
 	if err != nil {
-		return errors.New(fmt.Sprintf("error inserting %v", err))
+		return http_errors.NewInternalServerError("error while inserting new document", []interface{}{err})
 	}
 	defer res.Body.Close()
 	if res.StatusCode == 409 {
-		return errors.New(fmt.Sprintf("conflict %v", err))
+		return http_errors.NewInternalServerError("error while conflict", []interface{}{err})
 	}
 	if res.IsError() {
-		return errors.New(fmt.Sprintf("error while inserting %v", err))
+		return http_errors.NewInternalServerError("error while inserting new document", []interface{}{err})
 	}
 
 	return nil

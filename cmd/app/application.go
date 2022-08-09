@@ -12,7 +12,7 @@ import (
 func StartApplication() {
 	elastic, err := elasticsearch.New([]string{"http://127.0.0.1:9206"})
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.Fatalln(err)
 	}
 	if err = elastic.CreateIndex("posts"); err != nil {
 		log.Fatalln(err)

@@ -2,8 +2,8 @@ package post
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
+	"yogasab/go-elasticsearch-crud-api/internal/utils/http_response"
 )
 
 type postHandler struct {
@@ -17,19 +17,19 @@ func NewPostHandler(postService PostService) postHandler {
 func (h postHandler) InsertDocument(w http.ResponseWriter, r *http.Request) {
 	var req InsertDocumentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Println(err)
+		data := map[string]interface{}{
+			"status":  "failed",
+			"code":    http.StatusBadRequest,
+			"message": "failed to decode request body",
+			"error":   err,
+		}
+		http_response.NewJSONResponse(w, http.StatusBadRequest, data)
 		return
 	}
-
 	result, err := h.postService.InsertDocument(r.Context(), req)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
+		http_response.NewJSONResponseError(w, err)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	body, _ := json.Marshal(result)
-	w.Write(body)
+	http_response.NewJSONResponse(w, http.StatusCreated, result)
 }

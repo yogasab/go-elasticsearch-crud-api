@@ -1,8 +1,7 @@
 package elasticsearch
 
 import (
-	"errors"
-	"fmt"
+	"yogasab/go-elasticsearch-crud-api/internal/utils/http_errors"
 
 	"github.com/elastic/go-elasticsearch/v8"
 )
@@ -17,48 +16,49 @@ type document struct {
 	Source interface{} `json:"_source"`
 }
 
-func New(address []string) (*Elasticsearch, error) {
+func New(address []string) (*Elasticsearch, http_errors.RestErrors) {
 	cfg := elasticsearch.Config{
 		Addresses: address,
 	}
 	client, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		return nil, err
+		return nil, http_errors.NewInternalServerError("cannot create new elasticsearch client", []interface{}{err})
+
 	}
 	return &Elasticsearch{
 		client: client,
 	}, nil
 }
 
-func (e *Elasticsearch) CreateIndex(index string) error {
+func (e *Elasticsearch) CreateIndex(index string) http_errors.RestErrors {
 	e.index = index
 	e.alias = index + "_alias"
 
 	res, err := e.client.Indices.Exists([]string{e.index})
 	if err != nil {
-		return errors.New("error while checking the exisiting index")
+		return http_errors.NewInternalServerError("cannot check index existence", []interface{}{err})
 	}
 	if res.StatusCode == 200 {
 		return nil
 	}
 	if res.StatusCode != 404 {
-		return errors.New(fmt.Sprintf("index not found %s", res.String()))
+		return http_errors.NewStatusNotFoundError("error in index existence response:", []interface{}{res.String()})
 	}
 
 	res, err = e.client.Indices.Create(e.index)
 	if err != nil {
-		return errors.New(fmt.Sprintf("error while create new index %s", err.Error()))
+		return http_errors.NewInternalServerError("cannot create index", []interface{}{err})
 	}
 	if res.IsError() {
-		return errors.New(fmt.Sprintln("error in index creation %s", res.String()))
+		return http_errors.NewInternalServerError("error in index creation response:", []interface{}{res.String()})
 	}
 
 	res, err = e.client.Indices.PutAlias([]string{e.index}, e.alias)
 	if err != nil {
-		return errors.New(fmt.Sprintf("cannot create index %v", err))
+		return http_errors.NewInternalServerError("cannot create index alias", []interface{}{err})
 	}
 	if res.IsError() {
-		return errors.New(fmt.Sprintf("error while naming alias %s", res.String()))
+		return http_errors.NewInternalServerError("error in index alias creation response:", []interface{}{res.String()})
 	}
 
 	return nil

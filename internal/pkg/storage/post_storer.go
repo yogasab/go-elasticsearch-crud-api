@@ -3,10 +3,11 @@ package storage
 import (
 	"context"
 	"time"
+	"yogasab/go-elasticsearch-crud-api/internal/utils/http_errors"
 )
 
 type PostStore interface {
-	Insert(ctx context.Context, post Post) error
+	Insert(ctx context.Context, post Post) http_errors.RestErrors
 }
 
 type Post struct {

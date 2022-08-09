@@ -2,16 +2,15 @@ package post
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 	"yogasab/go-elasticsearch-crud-api/internal/pkg/storage"
+	"yogasab/go-elasticsearch-crud-api/internal/utils/http_errors"
 
 	"github.com/google/uuid"
 )
 
 type PostService interface {
-	InsertDocument(ctx context.Context, request InsertDocumentRequest) (*InsertDocumentRequest, error)
+	InsertDocument(ctx context.Context, request InsertDocumentRequest) (*InsertDocumentRequest, http_errors.RestErrors)
 }
 
 type postService struct {
@@ -22,7 +21,7 @@ func NewPostService(storage storage.PostStore) PostService {
 	return &postService{storage: storage}
 }
 
-func (s postService) InsertDocument(ctx context.Context, request InsertDocumentRequest) (*InsertDocumentRequest, error) {
+func (s postService) InsertDocument(ctx context.Context, request InsertDocumentRequest) (*InsertDocumentRequest, http_errors.RestErrors) {
 	id := uuid.New().String()
 	created_at := time.Now().UTC()
 
@@ -35,7 +34,7 @@ func (s postService) InsertDocument(ctx context.Context, request InsertDocumentR
 
 	err := s.storage.Insert(ctx, post)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("error while create new document service %v", err))
+		return nil, err
 	}
 	return &request, nil
 }
