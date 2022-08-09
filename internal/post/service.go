@@ -11,6 +11,7 @@ import (
 
 type PostService interface {
 	InsertDocument(ctx context.Context, request InsertDocumentRequest) (*InsertDocumentRequest, http_errors.RestErrors)
+	FindDocumentByID(ctx context.Context, ID string) (*storage.Post, http_errors.RestErrors)
 }
 
 type postService struct {
@@ -37,4 +38,12 @@ func (s postService) InsertDocument(ctx context.Context, request InsertDocumentR
 		return nil, err
 	}
 	return &request, nil
+}
+
+func (s postService) FindDocumentByID(ctx context.Context, ID string) (*storage.Post, http_errors.RestErrors) {
+	post, err := s.storage.FindByID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+	return post, nil
 }
