@@ -5,3 +5,8 @@ type InsertDocumentRequest struct {
 	Text  string   `json:"text"`
 	Tags  []string `json:"tags"`
 }
+
+type UpdateDocumentRequest struct {
+	ID   string
+	Body InsertDocumentRequest
+}

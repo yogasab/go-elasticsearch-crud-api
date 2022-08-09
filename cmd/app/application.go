@@ -22,6 +22,7 @@ func StartApplication() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	postService := post.NewPostService(postStorage)
 	postHandler := post.NewPostHandler(postService)
 
