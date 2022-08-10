@@ -70,7 +70,7 @@ func (p postStorage) FindByID(ctx context.Context, ID string) (*storage.Post, ht
 		return nil, http_errors.NewStatusNotFoundError("error document not found", []interface{}{err})
 	}
 	if res.IsError() {
-		return nil, http_errors.NewInternalServerError("error while inserting new document", []interface{}{err})
+		return nil, http_errors.NewInternalServerError("error while finding the corespond document", []interface{}{err})
 	}
 	var (
 		post storage.Post
