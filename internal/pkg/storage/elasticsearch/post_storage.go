@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 	"yogasab/go-elasticsearch-crud-api/internal/pkg/storage"
@@ -114,7 +113,6 @@ func (p postStorage) UpdateByID(ctx context.Context, post storage.Post) http_err
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	res, err := req.Do(ctx, p.elastic.client)
-	log.Println(res.String())
 	if err != nil {
 		return http_errors.NewInternalServerError("error while updating new document", []interface{}{err})
 	}
