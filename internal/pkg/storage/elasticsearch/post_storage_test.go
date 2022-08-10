@@ -20,6 +20,13 @@ var (
 		Tags:      []string{"tags1", "tags2"},
 		CreatedAt: &created_at,
 	}
+	updatedPost = storage.Post{
+		ID:        id,
+		Title:     "New Title from Update",
+		Text:      "New Text from Update",
+		Tags:      []string{"tags2", "tags3"},
+		CreatedAt: &created_at,
+	}
 )
 
 // ===============================================
@@ -40,7 +47,6 @@ func TestErrorInsertNewDocument(t *testing.T) {
 	assert.EqualValues(t, "error", errRest.Status())
 	assert.EqualValues(t, "error while inserting new document", errRest.Message())
 }
-
 func TestResErrorInsertNewDocument(t *testing.T) {
 	elastic, err := New([]string{address})
 
@@ -55,7 +61,6 @@ func TestResErrorInsertNewDocument(t *testing.T) {
 	assert.EqualValues(t, "error", errRest.Status())
 	assert.EqualValues(t, "error while inserting new document", errRest.Message())
 }
-
 func TestInsertNewDocument(t *testing.T) {
 	elastic, err := New([]string{address})
 	elastic.index = "posts"
@@ -89,7 +94,6 @@ func TestErrFindByID(t *testing.T) {
 	assert.EqualValues(t, "error", errRest.Status())
 	assert.EqualValues(t, "error while find one document", errRest.Message())
 }
-
 func TestErrNotFoundFindByID(t *testing.T) {
 	elastic, err := New([]string{address})
 	elastic.index = "posts"
@@ -107,7 +111,6 @@ func TestErrNotFoundFindByID(t *testing.T) {
 	assert.EqualValues(t, "failed", errRest.Status())
 	assert.EqualValues(t, "error document not found", errRest.Message())
 }
-
 func TestFoundDocumentFindByID(t *testing.T) {
 	elastic, err := New([]string{address})
 	elastic.index = "posts"
@@ -175,5 +178,62 @@ func TestDeleteByID(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, elastic)
 	assert.Nil(t, errRest)
+}
 
+// ===============================================
+
+// ===============================================
+func TestDocumentUpdateByID(t *testing.T) {
+	elastic, err := New([]string{address})
+	elastic.index = "posts"
+	elastic.alias = elastic.index + "_alias"
+
+	ps, errRest := NewPostStorage(*elastic)
+	errRest = ps.Insert(ctx, newPost)
+	errRest = ps.UpdateByID(ctx, updatedPost)
+
+	assert.Nil(t, err)
+	assert.Nil(t, errRest)
+	assert.NotNil(t, ps)
+
+	assert.EqualValues(t, id, updatedPost.ID)
+	assert.EqualValues(t, "New Title from Update", updatedPost.Title)
+	assert.EqualValues(t, "New Text from Update", updatedPost.Text)
+	assert.EqualValues(t, []string{"tags2", "tags3"}, updatedPost.Tags)
+}
+func TestErrNotFoundUpdateByID(t *testing.T) {
+	elastic, err := New([]string{address})
+	elastic.index = "posts"
+	elastic.alias = elastic.index + "_alias"
+
+	ps, errRest := NewPostStorage(*elastic)
+	errRest = ps.Insert(ctx, newPost)
+	updatedPost.ID = "0c24230b-acfe-4b99-ac54-179e544158e0"
+	errRest = ps.UpdateByID(ctx, updatedPost)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, errRest)
+	assert.NotNil(t, ps)
+
+	assert.EqualValues(t, http.StatusNotFound, errRest.Code())
+	assert.EqualValues(t, "failed", errRest.Status())
+	assert.EqualValues(t, "error document not found", errRest.Message())
+}
+func TestErrUpdateByID(t *testing.T) {
+	elastic, err := New([]string{wrongAddress})
+	elastic.index = "posts"
+	elastic.alias = elastic.index + "_alias"
+
+	ps, errRest := NewPostStorage(*elastic)
+	errRest = ps.Insert(ctx, newPost)
+	updatedPost.ID = "0c24230b-acfe-4b99-ac54-179e544158e0"
+	errRest = ps.UpdateByID(ctx, updatedPost)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, errRest)
+	assert.NotNil(t, ps)
+
+	assert.EqualValues(t, http.StatusInternalServerError, errRest.Code())
+	assert.EqualValues(t, "error", errRest.Status())
+	assert.EqualValues(t, "error while updating new document", errRest.Message())
 }
