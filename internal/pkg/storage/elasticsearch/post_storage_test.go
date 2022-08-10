@@ -127,3 +127,53 @@ func TestFoundDocumentFindByID(t *testing.T) {
 	assert.EqualValues(t, newPost.Tags, currentPost.Tags)
 	assert.EqualValues(t, "2022-08-10 12:51:08.5610373 +0000 UTC", currentPost.CreatedAt.String())
 }
+
+// ===============================================
+
+// ===============================================
+func TestErrDeleteByID(t *testing.T) {
+	elastic, err := New([]string{wrongAddress})
+	elastic.index = "posts"
+	elastic.alias = elastic.index + "_alias"
+
+	ps, errRest := NewPostStorage(*elastic)
+	errRest = ps.DeleteByID(ctx, "710fd955-c2b8-4451-9ade-1cd8055d0dbe")
+
+	assert.Nil(t, err)
+	assert.NotNil(t, elastic)
+	assert.NotNil(t, errRest)
+
+	assert.EqualValues(t, http.StatusInternalServerError, errRest.Code())
+	assert.EqualValues(t, "error", errRest.Status())
+	assert.EqualValues(t, "error while find one document", errRest.Message())
+}
+func TestErrNotFoundDeleteByID(t *testing.T) {
+	elastic, err := New([]string{address})
+	elastic.index = "posts"
+	elastic.alias = elastic.index + "_alias"
+
+	ps, errRest := NewPostStorage(*elastic)
+	errRest = ps.DeleteByID(ctx, "710fd955-c2b8-4451-9ade-1cd8055d0dbe")
+
+	assert.Nil(t, err)
+	assert.NotNil(t, elastic)
+	assert.NotNil(t, errRest)
+
+	assert.EqualValues(t, http.StatusNotFound, errRest.Code())
+	assert.EqualValues(t, "failed", errRest.Status())
+	assert.EqualValues(t, "error document not found", errRest.Message())
+}
+func TestDeleteByID(t *testing.T) {
+	elastic, err := New([]string{address})
+	elastic.index = "posts"
+	elastic.alias = elastic.index + "_alias"
+
+	ps, errRest := NewPostStorage(*elastic)
+	errRest = ps.Insert(ctx, newPost)
+	errRest = ps.DeleteByID(ctx, newPost.ID)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, elastic)
+	assert.Nil(t, errRest)
+
+}
