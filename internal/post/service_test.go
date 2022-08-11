@@ -102,3 +102,39 @@ func TestFindDocumentByID(t *testing.T) {
 	assert.Equal(t, []string{"tags1", "tags2"}, currentPost.Tags)
 	assert.Equal(t, "2022-08-10 12:51:08.5610373 +0000 UTC", currentPost.CreatedAt.String())
 }
+
+func TestDeleteDocumentByID(t *testing.T) {
+	elastic := newPostService()
+	err := elastic.CreateIndex("posts")
+
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
+	postService := NewPostService(postStorage)
+
+	documentID := "new id insert here"
+	currentPost, errRest := postService.DeleteDocumentByID(ctx, documentID)
+
+	assert.Nil(t, err)
+	assert.Nil(t, errRest)
+	assert.NotNil(t, currentPost)
+
+	assert.EqualValues(t, true, currentPost)
+}
+
+func TestErrorDeleteDocumentByID(t *testing.T) {
+	elastic := newPostService()
+	err := elastic.CreateIndex("posts")
+
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
+	postService := NewPostService(postStorage)
+
+	documentID := "5f821657-1dea-492c-897b-416695e5f1c9"
+	currentPost, errRest := postService.DeleteDocumentByID(ctx, documentID)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, errRest)
+	assert.NotNil(t, currentPost)
+	assert.NotNil(t, errRest.Code())
+	assert.NotNil(t, errRest.Status())
+	assert.NotNil(t, errRest.Message())
+	assert.EqualValues(t, false, currentPost)
+}
