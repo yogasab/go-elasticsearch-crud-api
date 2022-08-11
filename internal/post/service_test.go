@@ -48,14 +48,14 @@ func TestInsertDocument(t *testing.T) {
 	elastic := newPostService()
 	err := elastic.CreateIndex("posts")
 
-	postStorage, errRest := elasticsearch.NewPostStorage(*elastic)
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
 	postService := NewPostService(postStorage)
 
 	var req InsertDocumentRequest
 	req.Title = "Post from service"
 	req.Text = "Text from service"
 	req.Tags = []string{"tags8", "tags9"}
-	newPost, err := postService.InsertDocument(ctx, req)
+	newPost, errRest := postService.InsertDocument(ctx, req)
 
 	assert.Nil(t, err)
 	assert.Nil(t, errRest)
@@ -66,4 +66,39 @@ func TestInsertDocument(t *testing.T) {
 	assert.Equal(t, req.Title, newPost.Title)
 	assert.Equal(t, req.Text, newPost.Text)
 	assert.Equal(t, req.Tags, newPost.Tags)
+}
+
+func TestErrorFindDocumentByID(t *testing.T) {
+	elastic := newPostService()
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
+	postService := NewPostService(postStorage)
+
+	unavailableDocumentID := "5d16a5b5-2e4d-4de2-baba-3d12bc69b2a5"
+	currentPost, errRest := postService.FindDocumentByID(ctx, unavailableDocumentID)
+
+	assert.Nil(t, err)
+	assert.Nil(t, currentPost)
+	assert.NotNil(t, errRest)
+	assert.NotNil(t, errRest.Code())
+	assert.NotNil(t, errRest.Status())
+	assert.NotNil(t, errRest.Message())
+}
+
+func TestFindDocumentByID(t *testing.T) {
+	elastic := newPostService()
+	err := elastic.CreateIndex("posts")
+
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
+	postService := NewPostService(postStorage)
+
+	currentPost, errRest := postService.FindDocumentByID(ctx, "1c1802cd-a99e-4bd6-92f8-33213ec29ed9")
+
+	assert.Nil(t, err)
+	assert.Nil(t, errRest)
+	assert.NotNil(t, currentPost)
+
+	assert.Equal(t, "New Title from Test", currentPost.Title)
+	assert.Equal(t, "New Text from Test", currentPost.Text)
+	assert.Equal(t, []string{"tags1", "tags2"}, currentPost.Tags)
+	assert.Equal(t, "2022-08-10 12:51:08.5610373 +0000 UTC", currentPost.CreatedAt.String())
 }
