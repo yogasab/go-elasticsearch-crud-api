@@ -138,3 +138,47 @@ func TestErrorDeleteDocumentByID(t *testing.T) {
 	assert.NotNil(t, errRest.Message())
 	assert.EqualValues(t, false, currentPost)
 }
+
+func TestUpdateDocumentByID(t *testing.T) {
+	elastic := newPostService()
+	err := elastic.CreateIndex("posts")
+
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
+	postService := NewPostService(postStorage)
+
+	var updatedReq UpdateDocumentRequest
+	updatedReq.ID = "1c1802cd-a99e-4bd6-92f8-33213ec29ed9"
+	updatedReq.Title = "Post from service updated"
+	updatedReq.Text = "Text from service updated"
+	updatedReq.Tags = []string{"tags8", "tags9"}
+	updatedPost, errRest := postService.UpdateDocumentByID(ctx, updatedReq)
+
+	assert.Nil(t, err)
+	assert.Nil(t, errRest)
+	assert.NotNil(t, updatedPost)
+
+	assert.EqualValues(t, true, updatedPost)
+}
+
+func TestErrorNotFoundUpdateDocumentByID(t *testing.T) {
+	elastic := newPostService()
+	err := elastic.CreateIndex("posts")
+
+	postStorage, err := elasticsearch.NewPostStorage(*elastic)
+	postService := NewPostService(postStorage)
+
+	var updatedReq UpdateDocumentRequest
+	updatedReq.ID = "1c1802cd-a99e-4bd6-92f8"
+	updatedReq.Title = "Post from service updated"
+	updatedReq.Text = "Text from service updated"
+	updatedReq.Tags = []string{"tags8", "tags9"}
+	updatedPost, errRest := postService.UpdateDocumentByID(ctx, updatedReq)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, errRest)
+	assert.NotNil(t, updatedPost)
+
+	assert.EqualValues(t, false, updatedPost)
+	assert.EqualValues(t, "failed", errRest.Status())
+	assert.EqualValues(t, "error document not found", errRest.Message())
+}
